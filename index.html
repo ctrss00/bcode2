@@ -1,0 +1,179 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>생산계획</title>
+<link rel="stylesheet" href="../css/common.css" />
+<style>
+.section_title { font-weight:bold; font-size:17px; }
+.search_btn { background-color:#5f5f5f; border:none; width:75px; height:35px; color:#fff; margin-top:2px; line-height:35px; font-size:13px; font-weight:bold; }
+.input_date { height:35px; line-height:35px; text-align:center; width:90px; background-color:#fff; border:1px solid #ccc; }
+</style>
+<script type="text/javascript" src="../js/dt_jquery-1.7.2.min.js"></script>
+<link type="text/css" href="../js/dt_jquery-ui.css" rel="stylesheet" />
+<script type="text/javascript" src="../js/dt_jquery-ui.min.js"></script>
+<script type="text/javascript">
+//<![CDATA[
+$(function() {
+    var availableCity = ["aaa","bbb"];
+	$(".auto_prod").autocomplete({
+        source: availableCity,
+        select: function(event, ui) {
+            console.log(ui.item);
+        },
+        focus: function(event, ui) {
+            return false;
+            //event.preventDefault();
+        }
+    });
+});
+//]]>
+</script>
+<link rel="stylesheet" href="./datepicker/jquery-ui.css">
+<script>
+function click_input(obj){
+	$( obj ).datepicker().datepicker("show");
+}
+
+jQuery(function($){
+ $.datepicker.regional['ko'] = {
+  closeText: '닫기',
+  prevText: '이전달',
+  nextText: '다음달',
+  currentText: '오늘',
+  monthNames: ['1월(JAN)','2월(FEB)','3월(MAR)','4월(APR)','5월(MAY)','6월(JUN)',
+  '7월(JUL)','8월(AUG)','9월(SEP)','10월(OCT)','11월(NOV)','12월(DEC)'],
+  monthNamesShort: ['1월','2월','3월','4월','5월','6월',
+  '7월','8월','9월','10월','11월','12월'],
+  dayNames: ['일','월','화','수','목','금','토'],
+  dayNamesShort: ['일','월','화','수','목','금','토'],
+  dayNamesMin: ['일','월','화','수','목','금','토'],
+  weekHeader: 'Wk',
+  dateFormat: 'yy-mm-dd',
+  firstDay: 0,
+  isRTL: false,
+  showMonthAfterYear: true,
+  yearSuffix: ''};
+ $.datepicker.setDefaults($.datepicker.regional['ko']);
+
+ $('#sk_YMD').datepicker({
+  showOn: 'button',
+  buttonImage: '../datepicker/images/cal.gif',
+  buttonImageOnly: false,
+  buttonText: "달력",
+  changeMonth: true,
+  changeYear: true,
+  showButtonPanel: true,
+  yearRange: 'c-99:c+99',
+  maxDate: '2999-12-31',
+  minDate: '2001-01-01'
+ }); 
+});
+
+
+
+function do_save(){
+	var f = document.plan_form;
+	var conf = confirm("저장하시겠습니까?");
+	if(conf){
+		f.submit();
+	}
+}
+
+function do_save_bottom(){
+	var f = document.plan_form;
+	var conf = confirm("저장하시겠습니까?");
+	if(conf){
+		f.submit();
+	}
+}
+
+function copy_comm(value, idx){
+	document.getElementById("copy_comm_plan_20_"+idx).innerHTML = value;
+	document.getElementById("copy_comm_plan_40_"+idx).innerHTML = value;
+	document.getElementById("copy_comm_plan_L_"+idx).innerHTML = value;
+}
+
+function focus_high(numb, line){
+	for (i=1;i<=numb;i++)
+	{
+		document.getElementById("line_"+i+"_"+line).style.background = "#fff200";
+	}
+}
+
+function focus_high_out(numb, line){
+	for (i=1;i<=numb;i++)
+	{
+		document.getElementById("line_"+i+"_"+line).style.background = "#ffffff";
+	}
+}
+</script>
+</head>
+<body>
+	
+<div style="width:1400px; margin:0 auto;font-size:14px;">
+	<div class="mt10"></div>
+
+	<div style="width:100%;overflow:hidden;">
+		<div style="float:left;width:460px;margin-top:30px;">
+			<input type="text" name="sk_YMD" id="sk_YMD" value="" class="input_date" readonly onclick="click_input(this);"/>
+			<button type="button" class="search_btn" style="background-color:#06041c;" onclick="do_date();">날짜선택</button>&nbsp;
+			<span id="ss_term" style="color:#050d7d;"></span>
+		</div>
+		<div style="float:left;width:500px;text-align:center;">
+			<h2><span id="date_txt">&nbsp;</span> 생산계획</h2>
+		</div>
+		<div style="float:right;margin-top:30px;"><button type="button" class="search_btn" style="background-color:#387d05;" onclick="do_save();">저장</button></div>
+	</div>
+
+	<div class="clear mt3"></div>		
+
+	<div style="width:100%;margin:0 auto;">
+	<iframe name="pro_frame" id="pro_frame" width="100%" height="0" style="display:none;"></iframe>
+	<form name="plan_form" method="post" action="weekly_plan_ok.asp" target="pro_frame">
+	<input type="hidden" name="PLAN_DATE" value="" />
+	<table class="tb_des">
+		<tr>
+			<th rowspan="2">No</th>
+			<th rowspan="2">품 명</th>
+			<th rowspan="2">규격</th>
+			<th rowspan="2" class="r_line">출고수량</th>
+			<th width="" colspan="9">공정별일정</th>
+			<th rowspan="2">출고일</th>
+			<th rowspan="2">출고처</th>
+		</tr>
+
+
+	</table>
+	</form>
+	</div>
+
+
+
+	<div style="width:100%;overflow:hidden;">
+		<div style="float:left;width:460px;">
+			<span id="ss_term_bottom" style="color:#050d7d;"></span>
+		</div>
+		<div style="float:left;width:500px;text-align:center;">
+			<h2>&nbsp;</h2>
+		</div>
+		<div style="float:right;"><button type="button" class="search_btn" style="background-color:#387d05;" onclick="do_save_bottom();">저장</button></div>
+	</div>
+</div>
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+
+
+
+
+</body>
+</html>
