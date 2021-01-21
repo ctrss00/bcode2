@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+    <meta charset="utf-8">
+    <meta name="robots" content="index,nofollow">
+    <title>바코드 스캐너</title>
+    <meta name="description" content="온라인 바코드 스캐너">
+    
+    <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css' />
+    <link rel='stylesheet' href='https://wepplication.github.io/tools/css/common.css' />
+
+  </head>
+  <body>
+    
+    <main>
+      <div class="container">
+        <div class="row">
+          <div class="col-md-10 col-md-offset-1">
+            <div id="title">
+              <h1><b>바코드 스캐너</b></h1>
+              설치 없이 웹에서 사용하는 온라인 바코드 스캐너<br/>
+              - 바코드 인식을 위해 카메라 권한이 필요합니다.
+            </div>
+          </div>
+        </div>
+        
+        <hr/>
+        
+        <div class="row">
+            <label for="videoSource" class="col-sm-1 control-label">카메라: </label>
+            <div class="col-sm-10 form-inline">
+                <select class="form-control" id="videoSource"></select>
+            </div>
+        </div>
+        
+        <hr/>
+        
+        <div class="row">
+            <div class="col-sm-10 col-sm-offset-1">
+                <div class="embed-responsive embed-responsive-4by3">
+                    <video muted autoplay id="video" playsinline="true" class="embed-responsive-item"></video>
+                </div>
+            </div>
+        </div>
+        
+        <div id="resultModal" class="modal fade">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">스캔 값</h4>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div><canvas id="canvas" width="240" height="320" style=""></canvas></div>
+                        <hr/>
+                        <p id="dbr"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">닫기</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
+        
+        <hr/>
+        
+
+
+      </div>
+    </main>
+    
+    
+
+
+
+    <script src="https://wepplication.github.io/tools/js/include.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://wepplication.github.io/tools/js/common.js"></script>
+    
+    <script async src="https://wepplication.github.io/tools/js/zxing.js"></script>
+  	<script src="https://wepplication.github.io/tools/js/FileSaver.js"></script>
+    <script>
+        var videoElement = document.querySelector('video');
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        var videoSelect = document.querySelector('#videoSource');
+        var barcode_result = document.getElementById('dbr');
+
+        var videoWidth = 240,
+        videoHeight = 320;
+        
+        var ZXing = null;
+        var decodePtr = null;
+        
+        var file = {};
+        
+        var tick = function () {
+            if (window.ZXing && document.getElementById("video").videoWidth > 0) {
+                ZXing = ZXing();
+                decodePtr = ZXing.Runtime.addFunction(decodeCallback);
+                scanBarcode();
+            } else {
+                setTimeout(tick, 50);
+            }
+        };
+        
+        var decodeCallback = function (ptr, len, resultIndex, resultCount) {
+            var result = new Uint8Array(ZXing.HEAPU8.buffer, ptr, len);
+            resultText = new TextDecoder("utf-8").decode(result);
+            var isLink = false;
+            var isFile = false;
+            file = {};
+            
+            if(/^(URLTO|mailto|facetime|facetime-audio|sms|SMSTO|mms|MMSTO|tel|geo):/.test(resultText)){
+                isLink = true;
+            }else if(resultText.indexOf("://") > 0){ // 4 custom uri scheme
+                isLink = true;
+            }
+            
+            if(/^(BEGIN:VCARD)/.test(resultText)){
+                isFile = true;
+                file.contentType = "text/vcard";
+                file.fileName = "VCARD.vcf";
+                file.content = resultText;
+            }else if(/^(BEGIN:VCALENDAR|BEGIN:VEVENT)/.test(resultText)){
+                isFile = true;
+                file.contentType = "text/calendar";
+                file.fileName = "ICALENDAR.ics";
+                file.content = resultText;
+            }
+            
+            if(isLink){
+                $("#dbr").html('<a href="'+resultText+'" target="_blank">'+resultText+'</a>');
+            }else if(isFile){
+                $("#dbr").html('<a href="#" onclick="fileDownload()">'+file.fileName+'</a>');
+            }else{
+                $("#dbr").text(resultText);
+            }
+            
+            $('#resultModal').modal('show');
+        };
+        
+        function fileDownload(){
+            var blob = new Blob([file.content], {type: file.contentType});
+            saveAs(blob, file.fileName);
+        }
+        
+        
+        $('#resultModal').on('hidden.bs.modal', function (e) {
+            $("#dbr").html("");
+            scanBarcode();
+        })
+        
+        // scan barcode
+        function scanBarcode() {
+            if (ZXing == null) {
+                alert("Barcode Reader is not ready!");
+                return;
+            }
+            
+            var data = null,
+            context = null,
+            width = 0,
+            height = 0,
+            dbrCanvas = null;
+            context = ctx;
+            width = videoWidth;
+            height = videoHeight;
+            dbrCanvas = canvas;
+            
+            context.drawImage(videoElement, 0, 0, width, height);
+            
+            var vid = document.getElementById("video");
+            //console.log("video width: " + vid.videoWidth + ", height: " + vid.videoHeight);
+            var barcodeCanvas = document.createElement("canvas");
+            barcodeCanvas.width = vid.videoWidth;
+            barcodeCanvas.height = vid.videoHeight;
+            var barcodeContext = barcodeCanvas.getContext('2d');
+            var imageWidth = vid.videoWidth, imageHeight = vid.videoHeight;
+            barcodeContext.drawImage(videoElement, 0, 0, imageWidth, imageHeight);
+            // read barcode
+            var imageData = barcodeContext.getImageData(0, 0, imageWidth, imageHeight);
+            var idd = imageData.data;
+            var image = ZXing._resize(imageWidth, imageHeight);
+            // console.time("decode barcode");
+            for (var i = 0, j = 0; i < idd.length; i += 4, j++) {
+                ZXing.HEAPU8[image + j] = idd[i];
+            }
+            var err = ZXing._decode_any(decodePtr);
+            // console.timeEnd('decode barcode');
+            // alert("error code :: "+ err);
+            if (err == -2) {
+                setTimeout(scanBarcode, 30);
+            }
+        }
+        
+        var videoSelect = document.querySelector('#videoSource');
+        
+        navigator.mediaDevices.enumerateDevices()
+        .then(gotDevices).then(getStream).catch(handleError);
+        
+        videoSelect.onchange = getStream;
+        
+        function gotDevices(deviceInfos) {
+            for (var i = deviceInfos.length - 1; i >= 0; --i) {
+                var deviceInfo = deviceInfos[i];
+                var option = document.createElement('option');
+                option.value = deviceInfo.deviceId;
+                if (deviceInfo.kind === 'videoinput') {
+                    option.text = deviceInfo.label || 'camera ' +
+                    (videoSelect.length + 1);
+                    videoSelect.appendChild(option);
+                } else {
+                // console.log('Found one other kind of source/device: ', deviceInfo);
+                }
+            }
+        }
+        
+        function getStream() {
+            if (window.stream) {
+                window.stream.getTracks().forEach(function(track) {
+                    track.stop();
+                });
+                videoElement.pause();
+            }
+            
+            var constraints = {
+                video: {
+                    deviceId: {exact: videoSelect.value}
+                }
+            };
+            
+            navigator.mediaDevices.getUserMedia(constraints).
+            then(gotStream).catch(handleError);
+        }
+        
+        function gotStream(stream) {
+            window.stream = stream; // make stream available to console
+            videoElement.srcObject = stream;
+        }
+        
+        function handleError(error) {
+            console.log('Error: ', error);
+        }
+        
+        $(document).ready(function(){
+            tick();
+        });
+    </script>
+  </body>
+</html>
