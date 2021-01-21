@@ -1,105 +1,43 @@
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<title>생산계획</title>
-<style>
-.section_title { font-weight:bold; font-size:17px; }
-.search_btn { background-color:#5f5f5f; border:none; width:75px; height:35px; color:#fff; margin-top:2px; line-height:35px; font-size:13px; font-weight:bold; }
-.input_date { height:35px; line-height:35px; text-align:center; width:90px; background-color:#fff; border:1px solid #ccc; }
-</style>
 
-<link rel="canonical" href="https://serratus.github.io/v1.0.0-beta.1/examples/file_input/" />
-<link rel="stylesheet" href="https://serratus.github.io/quaggaJS/stylesheets/styles.css">
-<link rel="stylesheet" href="https://serratus.github.io/quaggaJS/stylesheets/example.css">
-<link rel="stylesheet" href="https://serratus.github.io/quaggaJS/stylesheets/pygment_trac.css">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<!--[if lt IE 9]>
-<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-<![endif]-->
-
-
-
-
-
-
-</head>
-<body>
-	
-
-<section id="container" class="container">
-    <h3>Working with file-input</h3>
-
-
-  <div class="controls">
-      <fieldset class="input-group">
-          <input type="file" accept="image/*;capture=camera"/>
-          <button>Rerun</button>
-      </fieldset>
-      <fieldset class="reader-config-group">
-          <label>
-              <span>Barcode-Type</span>
-              <select name="decoder_readers">
-                  <option value="code_128" selected="selected">Code 128</option>
-                  <option value="code_39">Code 39</option>
-                  <option value="code_39_vin">Code 39 VIN</option>
-                  <option value="ean">EAN</option>
-                  <option value="ean_extended">EAN-extended</option>
-                  <option value="ean_8">EAN-8</option>
-                  <option value="upc">UPC</option>
-                  <option value="upc_e">UPC-E</option>
-                  <option value="codabar">Codabar</option>
-                  <option value="i2of5">ITF</option>
-              </select>
-          </label>
-          <label>
-              <span>Resolution (long side)</span>
-              <select name="input-stream_size">
-                  <option value="320">320px</option>
-                  <option value="640">640px</option>
-                  <option selected="selected" value="800">800px</option>
-                  <option value="1280">1280px</option>
-                  <option value="1600">1600px</option>
-                  <option value="1920">1920px</option>
-              </select>
-          </label>
-          <label>
-              <span>Patch-Size</span>
-              <select name="locator_patch-size">
-                  <option value="x-small">x-small</option>
-                  <option value="small">small</option>
-                  <option selected="selected" value="medium">medium</option>
-                  <option value="large">large</option>
-                  <option value="x-large">x-large</option>
-              </select>
-          </label>
-          <label>
-              <span>Half-Sample</span>
-              <input type="checkbox" name="locator_half-sample" />
-          </label>
-          <label>
-              <span>Workers</span>
-              <select name="numOfWorkers">
-                  <option value="0">0</option>
-                  <option value="1" selected="selected">1</option>
-                  <option value="2">2</option>
-                  <option value="4">4</option>
-                  <option value="8">8</option>
-              </select>
-          </label>
-      </fieldset>
-  </div>
-  <div id="result_strip">
-    <ul class="thumbnails"></ul>
-  </div>
-  <div id="interactive" class="viewport">
-      <canvas class="drawing" />
-  </div>
-</section>
-<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
-<script src="https://serratus.github.io/quaggaJS/v1.0.0-beta.1/examples/js/quagga.min.js" type="text/javascript"></script>
-<script src="https://serratus.github.io/quaggaJS/v1.0.0-beta.1/examples/file_input/file_input.js" type="text/javascript"></script>
-
-<script src="https://serratus.github.io/quaggaJS/javascripts/scale.fix.js"></script>
-</body>
+<html>
+  <head>
+    <title>Instascan &ndash; Demo</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="style.css">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/3.3.3/adapter.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.10/vue.min.js"></script>
+    <script type="text/javascript" src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+  </head>
+  <body>
+    <a href="https://github.com/schmich/instascan"><img style="position: absolute; top: 0; right: 0; border: 0; z-index: 1" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"></a>
+    <div id="app">
+      <div class="sidebar">
+        <section class="cameras">
+          <h2>Cameras</h2>
+          <ul>
+            <li v-if="cameras.length === 0" class="empty">No cameras found</li>
+            <li v-for="camera in cameras">
+              <span v-if="camera.id == activeCameraId" :title="formatName(camera.name)" class="active">{{ formatName(camera.name) }}</span>
+              <span v-if="camera.id != activeCameraId" :title="formatName(camera.name)">
+                <a @click.stop="selectCamera(camera)">{{ formatName(camera.name) }}</a>
+              </span>
+            </li>
+          </ul>
+        </section>
+        <section class="scans">
+          <h2>Scans</h2>
+          <ul v-if="scans.length === 0">
+            <li class="empty">No scans yet</li>
+          </ul>
+          <transition-group name="scans" tag="ul">
+            <li v-for="scan in scans" :key="scan.date" :title="scan.content">{{ scan.content }}</li>
+          </transition-group>
+        </section>
+      </div>
+      <div class="preview-container">
+        <video id="preview"></video>
+      </div>
+    </div>
+    <script type="text/javascript" src="app.js"></script>
+  </body>
 </html>
