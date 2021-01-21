@@ -128,11 +128,11 @@
             }
             
             if(isLink){
-                $("#dbr").html('<a href="'+resultText+'" target="_blank">'+resultText+'</a>');
+                $("#dbr").html('<a href="'+resultText+'" target="_blank">T11_'+resultText+'</a>');
             }else if(isFile){
-                $("#dbr").html('<a href="#" onclick="fileDownload()">'+file.fileName+'</a>');
+                $("#dbr").html('<a href="#" onclick="fileDownload()">T22_'+file.fileName+'</a>');
             }else{
-                $("#dbr").text(resultText);
+                $("#dbr").text('T33_'+resultText);
             }
             
             $('#resultModal').modal('show');
